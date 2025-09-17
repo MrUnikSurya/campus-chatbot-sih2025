@@ -1,11 +1,11 @@
 import json
 from flask import Flask, request, jsonify, render_template
+import re
 
 # Initialize the Flask application
 app = Flask(__name__, template_folder="../frontend")
 
 # Load the FAQ data from the JSON file
-# Use encoding='utf-8' to support characters like 'नमस्ते'
 try:
     with open('backend/faq.json', 'r', encoding='utf-8') as f:
         faq_data = json.load(f)
@@ -13,20 +13,42 @@ except FileNotFoundError:
     print("Error: faq.json not found. Please create the file.")
     faq_data = []
 
+def is_hindi(text):
+    """
+    Checks if the text contains Hindi (Devanagari) characters.
+    """
+    return bool(re.search('[\u0900-\u097F]', text))
+
 def get_bot_response(user_message):
     """
-    Finds a response from the FAQ data based on the user's message.
+    Finds a response from the FAQ data based on the user's message
+    and returns the reply in the appropriate language.
     """
-    # Clean and convert the user's message to lowercase
+    # Clean the user's message and convert to lowercase
     message = user_message.lower().strip()
+    
+    # Determine the user's language
+    is_user_hindi = is_hindi(user_message)
 
     for item in faq_data:
-        # Check if any pattern in the list matches the user's message
         for pattern in item['patterns']:
-            if pattern.lower() in message:
+            # Convert pattern to lowercase for case-insensitive matching
+            # Use '==' for exact matches like greetings and thanks
+            if pattern.lower() == message:
+                if is_user_hindi and 'response_hindi' in item:
+                    return item['response_hindi']
+                # Check for English greetings/thanks and return the English response
+                elif not is_user_hindi and 'response' in item:
+                    return item['response']
+            # Use 'in' for matching keywords within a longer question
+            elif pattern.lower() in message:
+                if is_user_hindi and 'response_hindi' in item:
+                    return item['response_hindi']
                 return item['response']
     
-    # If no match is found, return a default response
+    # Default response if no match is found
+    if is_user_hindi:
+        return "मुझे क्षमा करें, मैं यह समझ नहीं पाया। क्या आप कृपया इसे दूसरे शब्दों में कह सकते हैं?"
     return "I'm sorry, I don't understand that. Can you please rephrase?"
 
 @app.route('/')
@@ -41,19 +63,12 @@ def chat():
     """
     Handles the chat message from the user and returns the bot's reply.
     """
-    # Get the message from the POST request's JSON body
     user_message = request.json.get('message')
-
     if not user_message:
         return jsonify({'error': 'No message provided'}), 400
 
-    # Get the bot's response
     bot_reply = get_bot_response(user_message)
-
-    # Return the response as JSON
     return jsonify({'reply': bot_reply})
 
 if __name__ == '__main__':
-    # Run the Flask app
-    # debug=True allows you to see errors and automatically reloads the server on changes
     app.run(debug=True)
