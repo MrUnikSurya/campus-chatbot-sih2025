@@ -1,0 +1,27 @@
+[
+  {
+    "intent": "greeting",
+    "patterns": ["hi", "hello", "hey", "good morning", "good afternoon"],
+    "response": "Hello! I'm your assistant. How can I help you today?"
+  },
+  {
+    "intent": "goodbye",
+    "patterns": ["bye", "goodbye", "see you", "catch you later"],
+    "response": "Goodbye! Have a great day."
+  },
+  {
+    "intent": "thanks",
+    "patterns": ["thanks", "thank you", "thx", "thankyou"],
+    "response": "You're welcome! Anything else I can help with?"
+  },
+  {
+    "intent": "how_are_you",
+    "patterns": ["how are you", "how are you doing", "what's up"],
+    "response": "I'm a bot — always ready to help! What do you need?"
+  },
+  {
+    "intent": "faq_delivery",
+    "patterns": ["where is my order", "order status", "track my order", "tracking"],
+    "response": "To track orders, please provide your order ID and I can check the status."
+  }
+]
