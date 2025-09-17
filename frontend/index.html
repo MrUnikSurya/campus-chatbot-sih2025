@@ -3,299 +3,228 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Lightweight Chat UI</title>
+  <title>Chatbot UI</title>
   <style>
-    :root{
-      --bg: #e9edef;
-      --panel: #f7f9fa;
-      --user-bubble: #DCF8C6; /* WhatsApp-like green */
-      --bot-bubble: #ffffff;
-      --accent: #25D366;
-      --muted: #6b7280;
-      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    :root {
+      --header-bg: #075E54;
+      --bg-color: #efeae2;
+      --bot-bg: #fff;
+      --user-bg: #DCF8C6;
+      --text-color: #000;
+      --doodle-color: 0.05; /* light mode doodle opacity */
+    }
+    body.dark {
+      --header-bg: #202c33;
+      --bg-color: #111b21;
+      --bot-bg: #202c33;
+      --user-bg: #005c4b;
+      --text-color: #e9edef;
+      --doodle-color: 0.08; /* dark mode doodle opacity */
     }
 
-    html,body{height:100%;margin:0;background:var(--bg);color:#111}
-    .app {
-      max-width:900px;
-      height:90vh;
-      margin:24px auto;
-      display:flex;
-      flex-direction:column;
-      border-radius:12px;
-      box-shadow:0 8px 24px rgba(2,6,23,0.08);
-      overflow:hidden;
-      background:linear-gradient(180deg,var(--panel),#fff);
-      border:1px solid rgba(0,0,0,0.04);
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg-color);
+      font-family: 'Segoe UI', Roboto, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      color: var(--text-color);
+      transition: background 0.3s ease, color 0.3s ease;
     }
 
-    /* header */
-    .header {
-      display:flex;align-items:center;gap:12px;padding:12px 16px;background:#fff;border-bottom:1px solid rgba(0,0,0,0.04);
-    }
-    .avatar {
-      width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#8bd1ff,#7ee1a3);
-      display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;
-      box-shadow:0 2px 6px rgba(12,34,80,0.08);
-      flex:0 0 44px;
-    }
-    .header .title {font-weight:600}
-    .header .sub {font-size:12px;color:var(--muted)}
-
-    /* messages area */
-    .messages {
-      flex:1;
-      padding:18px;
-      overflow:auto;
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-      background-image: linear-gradient(transparent, rgba(0,0,0,0.01));
+    .chat-container {
+      background: #fff;
+      width: 100%;
+      max-width: 420px;
+      height: 85vh;
+      display: flex;
+      flex-direction: column;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      overflow: hidden;
+      background: var(--bg-color);
+      transition: background 0.3s ease;
     }
 
-    .msg-row {display:flex;gap:8px;align-items:flex-end;}
-    .msg-row.left {justify-content:flex-start;}
-    .msg-row.right {justify-content:flex-end;}
-
-    .bubble {
-      max-width:74%;
-      padding:10px 12px;
-      border-radius:14px;
-      line-height:1.3;
-      box-shadow:0 1px 0 rgba(0,0,0,0.06);
-      font-size:14px;
-      position:relative;
-      word-wrap:break-word;
-      white-space:pre-wrap;
+    /* --- HEADER --- */
+    .chat-header {
+      background: var(--header-bg);
+      color: white;
+      padding: 14px;
+      font-size: 18px;
+      font-weight: bold;
+      text-align: center;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background 0.3s ease;
     }
 
-    /* tails (simple) */
-    .msg-row.left .bubble::after{
-      content:"";
-      position:absolute;left:-6px;bottom:6px;width:0;height:0;border-right:8px solid var(--bot-bubble);border-top:8px solid transparent;border-bottom:8px solid transparent;
-      filter:drop-shadow(0 1px 0 rgba(0,0,0,0.02));
+    .theme-toggle {
+      background: transparent;
+      border: none;
+      color: white;
+      font-size: 18px;
+      cursor: pointer;
+      transition: transform 0.3s ease;
     }
-    .msg-row.right .bubble::after{
-      content:"";
-      position:absolute;right:-6px;bottom:6px;width:0;height:0;border-left:8px solid var(--user-bubble);border-top:8px solid transparent;border-bottom:8px solid transparent;
-    }
-
-    .bubble.bot { background:var(--bot-bubble); color:#111 }
-    .bubble.user { background:var(--user-bubble); color:#111; }
-
-    .meta { display:flex; gap:8px; align-items:center; margin-top:6px; font-size:11px; color:var(--muted);}
-
-    /* input area */
-    .input-area{
-      display:flex;
-      gap:10px;
-      padding:10px;
-      align-items:center;
-      border-top:1px solid rgba(0,0,0,0.04);
-      background:#fff;
-    }
-    .input-area form {display:flex; gap:8px; width:100%}
-    .input {
-      flex:1;
-      display:flex;
-      border-radius:999px;
-      padding:10px 12px;
-      align-items:center;
-      gap:8px;
-      border:1px solid rgba(0,0,0,0.06);
-      box-shadow:inset 0 1px 0 rgba(255,255,255,0.6);
-      background:#fff;
-    }
-    .input textarea {
-      resize:none;
-      border:0;outline:0;
-      width:100%;
-      min-height:34px;max-height:120px;
-      font-size:14px;
-      font-family:inherit;
-      background:transparent;
-    }
-    .btn-send {
-      background:var(--accent);
-      border:none;color:white;padding:8px 12px;border-radius:8px;
-      display:inline-flex;align-items:center;gap:8px;font-weight:600;cursor:pointer;
-      box-shadow:0 6px 12px rgba(37,211,102,0.12);
-    }
-    .btn-send:disabled{opacity:0.5;cursor:not-allowed;box-shadow:none}
-
-    /* small screens */
-    @media (max-width:420px){
-      .app{margin:0;border-radius:0;height:100vh;}
-      .header .title{font-size:14px}
+    .theme-toggle:hover {
+      transform: scale(1.1);
     }
 
-    /* typing placeholder */
-    .typing {
-      font-style:italic;color:var(--muted);opacity:0.95;
+    /* --- MESSAGES AREA --- */
+    .chat-messages {
+      flex: 1;
+      padding: 12px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background-color: var(--bg-color);
+      background-image: url("data:image/svg+xml,%3Csvg width='104' height='104' viewBox='0 0 104 104' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg opacity='%3C%=opacity%3E'%3E%3Cpath d='M52 0C23.3 0 0 23.3 0 52C0 80.7 23.3 104 52 104C80.7 104 104 80.7 104 52C104 23.3 80.7 0 52 0ZM52 96C27.2 96 8 76.8 8 52C8 27.2 27.2 8 52 8C76.8 8 96 27.2 96 52C96 76.8 76.8 96 52 96Z' fill='%23ffffff'/%3E%3C/g%3E%3C/svg%3E");
+      background-repeat: repeat;
+      background-size: 300px;
+      transition: background-color 0.3s ease;
     }
 
+    /* --- CHAT BUBBLES --- */
+    .message {
+      max-width: 75%;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 14px;
+      word-wrap: break-word;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+      position: relative;
+      color: var(--text-color);
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+    .bot-message {
+      background: var(--bot-bg);
+      align-self: flex-start;
+      border-bottom-left-radius: 0;
+    }
+    .user-message {
+      background: var(--user-bg);
+      align-self: flex-end;
+      border-bottom-right-radius: 0;
+    }
+
+    /* --- INPUT AREA --- */
+    .chat-input-area {
+      display: flex;
+      padding: 10px;
+      background: var(--bot-bg);
+      border-top: 1px solid #ddd;
+      gap: 8px;
+      transition: background 0.3s ease;
+    }
+    .chat-input {
+      flex: 1;
+      padding: 10px;
+      border-radius: 20px;
+      border: 1px solid #ccc;
+      outline: none;
+      resize: none;
+      font-size: 14px;
+      max-height: 120px;
+      min-height: 38px;
+      background: var(--bg-color);
+      color: var(--text-color);
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+    .send-btn {
+      background: #25D366;
+      border: none;
+      color: white;
+      padding: 10px 16px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-weight: bold;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 0 3px 8px rgba(37, 211, 102, 0.3);
+      transition: background 0.3s ease;
+    }
+    .send-btn:hover {
+      background: #20b857;
+    }
   </style>
 </head>
 <body>
-  <div class="app" role="application" aria-label="Chat UI">
-    <div class="header">
-      <div class="avatar" aria-hidden="true">B</div>
-      <div>
-        <div class="title">Bot</div>
-        <div class="sub">Lightweight Chat — demo</div>
-      </div>
+  <div class="chat-container">
+    <div class="chat-header">
+      ChatBot Demo
+      <button id="theme-toggle" class="theme-toggle" title="Toggle Dark Mode">🌙</button>
     </div>
 
-    <div id="messages" class="messages" aria-live="polite" aria-atomic="false"></div>
-
-    <div class="input-area">
-      <form id="chatForm" autocomplete="off">
-        <div class="input" role="group" aria-label="Message input">
-          <textarea id="messageInput" placeholder="Type a message..." rows="1" required></textarea>
-        </div>
-        <button id="sendBtn" class="btn-send" type="submit" aria-label="Send message">Send</button>
-      </form>
+    <div id="chat-messages" class="chat-messages">
+      <div class="message bot-message">Hello! 👋 I'm your bot. Type a message below.</div>
     </div>
+
+    <form id="chat-form" class="chat-input-area">
+      <textarea id="chat-input" class="chat-input" placeholder="Type a message..." required></textarea>
+      <button class="send-btn" type="submit">➤</button>
+    </form>
   </div>
 
   <script>
-    // --- Minimal, robust frontend JS ---
+    const chatMessages = document.getElementById("chat-messages");
+    const chatForm = document.getElementById("chat-form");
+    const chatInput = document.getElementById("chat-input");
+    const themeToggle = document.getElementById("theme-toggle");
 
-    const messagesEl = document.getElementById('messages');
-    const form = document.getElementById('chatForm');
-    const input = document.getElementById('messageInput');
-    const sendBtn = document.getElementById('sendBtn');
-
-    // smooth scroll helper
-    function scrollToBottom() {
-      // ensure last message visible
-      const last = messagesEl.lastElementChild;
-      if (last) last.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    function appendMessage(text, isUser = false) {
+      const msgDiv = document.createElement("div");
+      msgDiv.classList.add("message", isUser ? "user-message" : "bot-message");
+      msgDiv.textContent = text;
+      chatMessages.appendChild(msgDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
-    // create and add a message bubble
-    function addMessage({ side = 'left', text = '', time = null, isTyping = false, id = null }) {
-      const row = document.createElement('div');
-      row.className = 'msg-row ' + (side === 'right' ? 'right' : 'left');
-
-      const bubble = document.createElement('div');
-      bubble.className = 'bubble ' + (side === 'right' ? 'user' : 'bot');
-      if (id) bubble.dataset.msgId = id;
-
-      if (isTyping) {
-        bubble.innerHTML = `<span class="typing">typing<span class="dots">.</span></span>`;
-        // simple animated dots
-        let i = 0;
-        bubble._dotsInterval = setInterval(() => {
-          i = (i + 1) % 4;
-          bubble.querySelector('.dots').textContent = '.'.repeat(i);
-        }, 400);
-      } else {
-        bubble.textContent = text;
-      }
-
-      row.appendChild(bubble);
-
-      // meta (time)
-      if (time) {
-        const meta = document.createElement('div');
-        meta.className = 'meta';
-        meta.textContent = time;
-        row.appendChild(meta);
-      }
-
-      messagesEl.appendChild(row);
-      scrollToBottom();
-      return bubble;
-    }
-
-    // clear typing indicator for a bubble element created by addMessage
-    function stopTyping(bubble, newText) {
-      if (!bubble) return;
-      if (bubble._dotsInterval) {
-        clearInterval(bubble._dotsInterval);
-        bubble._dotsInterval = null;
-      }
-      bubble.classList.remove('typing');
-      bubble.textContent = newText;
-      scrollToBottom();
-    }
-
-    // timestamp helper e.g. 12:34
-    function nowTime() {
-      const d = new Date();
-      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    }
-
-    // send flow
-    async function sendMessage(text) {
-      // show user bubble immediately
-      addMessage({ side: 'right', text: text, time: nowTime() });
-
-      // show bot typing bubble (we'll replace its text when response arrives)
-      const typingBubble = addMessage({ side: 'left', isTyping: true });
-
-      // send to backend
-      try {
-        // adjust payload to match your backend API
-        const res = await fetch('/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: text })
-        });
-
-        if (!res.ok) {
-          throw new Error('Server returned ' + res.status);
-        }
-
-        // backend may return JSON { reply: "..." } or plain text.
-        const contentType = res.headers.get('content-type') || '';
-        let replyText = '';
-
-        if (contentType.includes('application/json')) {
-          const json = await res.json();
-          // support either {reply: "..."} or {message: "..."}
-          replyText = json.reply ?? json.message ?? JSON.stringify(json);
-        } else {
-          replyText = await res.text();
-        }
-
-        stopTyping(typingBubble, replyText);
-      } catch (err) {
-        stopTyping(typingBubble, 'Sorry — failed to reach server.');
-        console.error('Chat send error:', err);
-      }
-    }
-
-    // handle form submit
-    form.addEventListener('submit', (e) => {
+    chatForm.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const text = input.value.trim();
+      const text = chatInput.value.trim();
       if (!text) return;
-      input.value = '';
-      sendBtn.disabled = true;
-      input.disabled = true;
+      
+      appendMessage(text, true);
+      chatInput.value = "";
 
-      // send (do not await here, but manage UI)
-      sendMessage(text).finally(() => {
-        sendBtn.disabled = false;
-        input.disabled = false;
-        input.focus();
-      });
-    });
+      const typingDiv = document.createElement("div");
+      typingDiv.classList.add("message", "bot-message");
+      typingDiv.textContent = "Bot is typing...";
+      chatMessages.appendChild(typingDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
 
-    // Enter to send (Shift+Enter for newline)
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        form.requestSubmit();
+      try {
+        const response = await fetch("/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: text }),
+        });
+        const data = await response.json();
+        chatMessages.removeChild(typingDiv);
+        appendMessage(data.reply);
+      } catch (error) {
+        chatMessages.removeChild(typingDiv);
+        appendMessage("⚠️ Failed to connect to server.");
       }
     });
 
-    // initial welcome message
-    window.addEventListener('load', () => {
-      addMessage({ side: 'left', text: 'Hello! This is a demo bot. Type a message and press Enter or Send.', time: nowTime() });
-      input.focus();
+    chatInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        chatForm.requestSubmit();
+      }
+    });
+
+    // Dark Mode Toggle
+    themeToggle.addEventListener("click", () => {
+      document.body.classList.toggle("dark");
+      themeToggle.textContent = document.body.classList.contains("dark") ? "☀️" : "🌙";
     });
   </script>
 </body>
