@@ -1,0 +1,22 @@
+[
+  {
+    "intent": "greeting",
+    "patterns": ["hi", "hello", "hey", "good morning", "नमस्ते", "नमस्कार", "सुप्रभात"],
+    "response": "Hello! 👋 How can I help you today?"
+  },
+  {
+    "intent": "goodbye",
+    "patterns": ["bye", "goodbye", "see you", "अलविदा", "फिर मिलेंगे"],
+    "response": "Goodbye! Take care."
+  },
+  {
+    "intent": "thanks",
+    "patterns": ["thanks", "thank you", "धन्यवाद", "धन्यबाद"],
+    "response": "You're welcome!"
+  },
+  {
+    "intent": "help",
+    "patterns": ["help", "i need help", "मदद", "सहायता"],
+    "response": "Sure! How can I assist you?"
+  }
+]
